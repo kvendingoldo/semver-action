@@ -138,9 +138,52 @@ def tag_not_needed(branch):
     return False  # new tag *is* needed
 
 
+def get_previous_release(tags, last_tag):
+    logging.info("Changelog tag list: %s", tags)
+
+    # Remove tags created after last_tag (current tag)
+    for tag in tags[:]:
+        if tag != last_tag:
+            del tags[0]
+        else:
+            break
+
+    logging.info("Changed changelog tag list: %s ", tags)
+
+    # Get previous release i.e. x.y.z
+    for tag in tags[1:]:
+        if not last_tag.endswith('.0'):
+            # Select first tag in tags which starts with X.Y from last tag
+            if tag.startswith('.'.join(last_tag.split('.')[:2])):
+                previous_release = tag
+                break
+        elif tag.startswith('rc/') or not tag.endswith('.0'):
+            previous_release = tag
+        else:
+            previous_release = tag
+            break
+    # Case when project is new and we got only one tag, thus previous tag will be None
+    if len(tags[1:]) == 0:
+        previous_release = None
+    logging.info("Previous release: %s ", previous_release)
+
+    return previous_release
+
+
+def create_release_branch(repo, new_version):
+    release_branch = 'release/{branch_tag}'.format(branch_tag='.'. \
+                                                   join(map(str, new_version[0:2])))
+    try:
+        repo.git.checkout('-b', release_branch)
+        logging.info(f"Release branch: {release_branch} successfully created")
+        repo.git.push('-u', 'origin', release_branch)
+        logging.info(f"Release branch: {release_branch} successfully pushed")
+    except Exception as err:
+        logging.info(f"Create release branch: {release_branch} error: {err}")
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('action', choices=['bump-and-tag', 'make-release'])
     parser.add_argument('--no-push', action='store_true')
 
     parsed_args = parser.parse_args()
@@ -150,6 +193,7 @@ def parse_args():
 def main():
     cmd_args = parse_args()
     logging.basicConfig(level=logging.INFO)
+
     repo_path = os.getcwd()
     repo = real_git.Repo(repo_path)
 
@@ -170,28 +214,39 @@ def main():
         logging.info("No tag for HEAD: %s", tag_for_head)
 
     new_version = get_bumped_version(last_tag, base_version, branch, commit_message, tag_for_head)
-    tag_value = get_versioned_tag_value(new_version, branch, commit_message)
+    tag = get_versioned_tag_value(new_version, branch, commit_message)
 
     logging.info(f"last_tag: {last_tag}")
     logging.info(f"base version: {base_version}")
     logging.info(f"new_version: {new_version}")
-    logging.info(f"tag value: {tag_value}")
+    logging.info(f"tag value: {tag}")
     logging.info(f"branch: {branch}")
     logging.info(f"message: {commit_message}")
     logging.info(f"tag_for_head: {tag_for_head}")
 
-    if cmd_args.action == 'bump-and-tag':
+    if '[RELEASE]' in commit_message and branch == 'master':
+        logging.info(f"Creating Release for last tag: {last_tag}")
+
+        tags = repo.git.tag(sort='-creatordate').split('\n')
+        previous_release = get_previous_release(tags, last_tag)
+
+        logging.info(f"Previous release: {previous_release}")
+
+        logging.info(f"Creating tag: {tag}")
+        repo.git.tag(tag, 'HEAD')
+
+        if cmd_args.no_push:
+            logging.info('Flag --no-push is set, not pushing tag and exiting')
+            return 0
+        else:
+            create_release_branch(repo, new_version)
+            repo.git.checkout(branch)
+            repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
+    else:
         if tag_not_needed(branch):
             logging.info('Setting new tag is not needed. Commit already tagged. Exiting.')
             return 0
 
-        if '[RELEASE]' in commit_message and branch == 'master':
-            release = 'true'
-        else:
-            release = 'false'
-
-        tag = tag_value
-        logging.info(f"PERFORMING RELEASE: {release}")
         logging.info(f"Creating tag: {tag}")
         repo.git.tag(tag, 'HEAD')
 
@@ -199,11 +254,7 @@ def main():
             logging.info('Flag --no-push is set, not pushing tag and exiting')
             return 0
 
-        repo.git.push('--tags', 'origin', 'refs/tags/{tag}'. \
-                      format(tag=tag))
-
-    elif cmd_args.action == 'make-release':
-        pass
+        repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
 
 
 if __name__ == '__main__':
