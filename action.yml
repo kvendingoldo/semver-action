@@ -1,11 +1,13 @@
 name: 'SemVer workflow'
 description: 'Updates version tags, creates release branches'
 author: 'kvendingoldo'
-#inputs:
-#  github_token:
-#    description: 'GITHUB_TOKEN. Optional if you use checkout@v2 action.'
-#    default: '${{ github.token }}'
+inputs:
+  action:
+    description: 'bump-and-tag or make-release'
+    default: 'bump-and-tag'
 
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  args:
+    - ${{ inputs.action }}
