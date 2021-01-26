@@ -5,6 +5,8 @@ author: 'kvendingoldo'
 outputs:
   version:
     description: 'Version tag'
+  safe_version:
+    description: 'Version tag without specific symbols'
 
 runs:
   using: 'docker'

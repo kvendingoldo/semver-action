@@ -191,8 +191,12 @@ def parse_args():
 
 
 def actions_output(version):
+    safe_version = version.replace("/", "-")
+
     logging.debug(f"Output that will be taken by GitHub action is: {version}")
+    logging.debug(f"Safe version is: {safe_version}")
     print(f"::set-output name=version::{version}")
+    print(f"::set-output name=safe_version::{safe_version}")
 
 
 def main():
