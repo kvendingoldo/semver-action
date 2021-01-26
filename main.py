@@ -190,6 +190,11 @@ def parse_args():
     return parsed_args
 
 
+def actions_output(version):
+    logging.debug(f"Output that will be taken by GitHub action is: {version}")
+    print(f"::set-output name=version::{version}")
+
+
 def main():
     cmd_args = parse_args()
     logging.basicConfig(level=logging.INFO)
@@ -237,6 +242,7 @@ def main():
 
         if cmd_args.no_push:
             logging.info('Flag --no-push is set, not pushing tag and exiting')
+            actions_output(tag)
             return 0
         else:
             create_release_branch(repo, new_version)
@@ -245,6 +251,7 @@ def main():
     else:
         if tag_not_needed(branch):
             logging.info('Setting new tag is not needed. Commit already tagged. Exiting.')
+            actions_output(tag)
             return 0
 
         logging.info(f"Creating tag: {tag}")
@@ -252,9 +259,12 @@ def main():
 
         if cmd_args.no_push:
             logging.info('Flag --no-push is set, not pushing tag and exiting')
+            actions_output(tag)
             return 0
 
         repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
+
+    actions_output(tag)
 
 
 if __name__ == '__main__':

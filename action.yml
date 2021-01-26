@@ -2,6 +2,10 @@ name: 'SemVer workflow'
 description: 'Updates version tags, creates release branches'
 author: 'kvendingoldo'
 
+outputs:
+  version:
+    description: 'Version tag'
+
 runs:
   using: 'docker'
   image: 'Dockerfile'
