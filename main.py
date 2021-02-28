@@ -14,7 +14,6 @@ from git import GitCommandError
 INIT_VERSION = os.getenv("INPUT_INIT_VERSION")
 PRIMARY_BRANCH = os.getenv("INPUT_PRIMARY_BRANCH")
 
-
 def git(*args):
     output = subprocess.check_output(["git"] + list(args)).decode().strip()
     logging.info(f"Git command {args} produced output:\n{output}\n=======")
@@ -113,6 +112,8 @@ def get_versioned_tag_value(version, branch, commit_message):
         elif branch.startswith("release/"):
             logging.info("Generating release tag for %s, release tag: %s", branch, version)
             res = str(version)
+        else:
+            res = None
     return res
 
 
@@ -226,50 +227,51 @@ def main():
     new_version = get_bumped_version(last_tag, base_version, branch, commit_message, tag_for_head)
     tag = get_versioned_tag_value(new_version, branch, commit_message)
 
-    logging.info(f"last_tag: {last_tag}")
-    logging.info(f"base version: {base_version}")
-    logging.info(f"new_version: {new_version}")
-    logging.info(f"tag value: {tag}")
-    logging.info(f"branch: {branch}")
-    logging.info(f"message: {commit_message}")
-    logging.info(f"tag_for_head: {tag_for_head}")
+    if tag:
+        logging.info(f"last_tag: {last_tag}")
+        logging.info(f"base version: {base_version}")
+        logging.info(f"new_version: {new_version}")
+        logging.info(f"tag value: {tag}")
+        logging.info(f"branch: {branch}")
+        logging.info(f"message: {commit_message}")
+        logging.info(f"tag_for_head: {tag_for_head}")
 
-    if '[RELEASE]' in commit_message and branch == PRIMARY_BRANCH:
-        logging.info(f"Creating Release for last tag: {last_tag}")
+        if '[RELEASE]' in commit_message and branch == PRIMARY_BRANCH:
+            logging.info(f"Creating Release for last tag: {last_tag}")
 
-        tags = repo.git.tag(sort='-creatordate').split('\n')
-        previous_release = get_previous_release(tags, last_tag)
+            tags = repo.git.tag(sort='-creatordate').split('\n')
+            previous_release = get_previous_release(tags, last_tag)
 
-        logging.info(f"Previous release: {previous_release}")
+            logging.info(f"Previous release: {previous_release}")
 
-        logging.info(f"Creating tag: {tag}")
-        repo.git.tag(tag, 'HEAD')
+            logging.info(f"Creating tag: {tag}")
+            repo.git.tag(tag, 'HEAD')
 
-        if cmd_args.no_push:
-            logging.info('Flag --no-push is set, not pushing tag and exiting')
-            actions_output(tag)
-            return 0
+            if cmd_args.no_push:
+                logging.info('Flag --no-push is set, not pushing tag and exiting')
+                actions_output(tag)
+                return 0
+            else:
+                create_release_branch(repo, new_version)
+                repo.git.checkout(branch)
+                repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
         else:
-            create_release_branch(repo, new_version)
-            repo.git.checkout(branch)
+            if tag_not_needed(branch):
+                logging.info('Setting new tag is not needed. Commit already tagged. Exiting.')
+                actions_output(tag)
+                return 0
+
+            logging.info(f"Creating tag: {tag}")
+            repo.git.tag(tag, 'HEAD')
+
+            if cmd_args.no_push:
+                logging.info('Flag --no-push is set, not pushing tag and exiting')
+                actions_output(tag)
+                return 0
+
             repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
-    else:
-        if tag_not_needed(branch):
-            logging.info('Setting new tag is not needed. Commit already tagged. Exiting.')
-            actions_output(tag)
-            return 0
 
-        logging.info(f"Creating tag: {tag}")
-        repo.git.tag(tag, 'HEAD')
-
-        if cmd_args.no_push:
-            logging.info('Flag --no-push is set, not pushing tag and exiting')
-            actions_output(tag)
-            return 0
-
-        repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
-
-    actions_output(tag)
+        actions_output(tag)
 
 
 if __name__ == '__main__':
