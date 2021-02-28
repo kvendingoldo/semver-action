@@ -2,6 +2,16 @@ name: 'SemVer workflow'
 description: 'Updates version tags, creates release branches'
 author: 'kvendingoldo'
 
+inputs:
+  primary_branch:
+    description: 'Main branch: master/main'
+    required: false
+    default: 'master'
+  init_version:
+    description: 'Initial project version'
+    required: false
+    default: '0.0.0'
+
 outputs:
   version:
     description: 'Version tag'

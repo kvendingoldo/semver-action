@@ -11,7 +11,8 @@ import semver
 import git as real_git
 from git import GitCommandError
 
-DEFAULT_VERSION = '0.0.0'
+INIT_VERSION = os.getenv("INPUT_INIT_VERSION")
+PRIMARY_BRANCH = os.getenv("INPUT_PRIMARY_BRANCH")
 
 
 def git(*args):
@@ -38,8 +39,8 @@ def get_base_tag(ref='HEAD'):
     if latest_tag_string:
         latest_tag_base_parsed = semver.VersionInfo.parse(latest_tag_string.split('/')[-1])
     else:
-        logging.warning(f"Unable to get base version. Returning {DEFAULT_VERSION}")
-        latest_tag_base_parsed = semver.VersionInfo.parse(DEFAULT_VERSION)
+        logging.warning("Unable to get base version. Returning %s", INIT_VERSION)
+        latest_tag_base_parsed = semver.VersionInfo.parse(INIT_VERSION)
     logging.info('Selected base version is %s', str(latest_tag_base_parsed))
     return latest_tag_base_parsed
 
@@ -51,8 +52,8 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
     if tag_for_head.startswith('rc/') and commit_branch is None:
         logging.info("Tag for HEAD already exists, no bump required {base_version}")
         return ''
-    # Bump for master branch
-    if commit_branch == 'master':
+    # Bump for primary branch
+    if commit_branch == PRIMARY_BRANCH:
         if '[BUMP-MAJOR]' in commit_message:
             logging.info(f"Major bump type detected from commit message {commit_message}")
             return 'major'
@@ -66,7 +67,7 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
                 res = 'minor'
             return res
 
-        logging.info('Master updated. minor bump required.')
+        logging.info('%s updated. Minor bump required.', commit_branch)
         return 'minor'
 
     # Bump for release branch
@@ -75,8 +76,8 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
                 base_version.patch == 0 and
                 git_get_latest_tag(candidates=0) == 'rc/' + str(base_version)
         ):
-            # version remains the same as in master as it's the same commit
-            logging.info('Release just cut from master. No bump needed.')
+            # version remains the same as in primary branch as it's the same commit
+            logging.info('Release just cut from %s. No bump needed.', commit_branch)
             return ''
         if tag_for_head != '':
             return ''
@@ -101,16 +102,16 @@ def get_bumped_version(last_tag, base_version, branch, commit_message, tag_for_h
 def get_versioned_tag_value(version, branch, commit_message):
     """
     Gets SemVer version and returns text value for tag
-    If currently on `master` branch, prepends "rc/" to version
+    If currently on primary branch, prepends "rc/" to version
     """
     if '[RELEASE]' in commit_message:
         res = version
     else:
-        if branch == 'master':
-            logging.info(f"Generating release candidate tag for master rc/{version}")
+        if branch == PRIMARY_BRANCH:
+            logging.info("Generating release tag for %s, release tag: rc/%s", branch, version)
             res = f"rc/{str(version)}"
-        else:
-            logging.info(f"Branch not master, release tag  {version}")
+        elif branch.startswith("release/"):
+            logging.info("Generating release tag for %s, release tag: %s", branch, version)
             res = str(version)
     return res
 
@@ -120,7 +121,7 @@ def tag_not_needed(branch):
     Function checks if setting tag is not needed.
     Tag is not needed when a tag is already set on this commit.
     The only exception is when `release/` branch has just been cut
-    from `master` thus has a `rc/` tag and must be tagged with "non rc/" tag
+    from primary branch thus has a `rc/` tag and must be tagged with "non rc/" tag
     """
     latest_tag_on_commit = git_get_latest_tag(candidates=0)
     if latest_tag_on_commit:
@@ -233,7 +234,7 @@ def main():
     logging.info(f"message: {commit_message}")
     logging.info(f"tag_for_head: {tag_for_head}")
 
-    if '[RELEASE]' in commit_message and branch == 'master':
+    if '[RELEASE]' in commit_message and branch == PRIMARY_BRANCH:
         logging.info(f"Creating Release for last tag: {last_tag}")
 
         tags = repo.git.tag(sort='-creatordate').split('\n')
