@@ -273,6 +273,8 @@ def main():
 
         actions_output(tag)
 
+    else:
+        logging.info("Tag setup for branch '%s' is skipped", branch)
 
 if __name__ == '__main__':
     sys.exit(main())
