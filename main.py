@@ -104,7 +104,7 @@ def get_versioned_tag_value(version, branch, commit_message):
     If currently on primary branch, prepends "rc/" to version
     """
     if '[RELEASE]' in commit_message:
-        res = version
+        res = str(version)
     else:
         if branch == PRIMARY_BRANCH:
             logging.info("Generating release tag for %s, release tag: rc/%s", branch, version)
