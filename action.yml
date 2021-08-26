@@ -17,6 +17,9 @@ outputs:
     description: 'Version tag'
   safe_version:
     description: 'Version tag without specific symbols'
+  java_version:
+    description: 'Version tag in Java format'
+
 
 runs:
   using: 'docker'

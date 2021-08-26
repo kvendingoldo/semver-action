@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 import os
 import sys
 import logging
@@ -13,6 +12,7 @@ from git import GitCommandError
 
 INIT_VERSION = os.getenv("INPUT_INIT_VERSION")
 PRIMARY_BRANCH = os.getenv("INPUT_PRIMARY_BRANCH")
+
 
 def git(*args):
     output = subprocess.check_output(["git"] + list(args)).decode().strip()
@@ -195,10 +195,18 @@ def parse_args():
 def actions_output(version):
     safe_version = version.replace("/", "-")
 
-    logging.debug(f"Output that will be taken by GitHub action is: {version}")
+    if "rc" in version:
+        java_version = version.replace("rc/", "") + "-RC"
+    else:
+        java_version = version
+
+    logging.debug(f"Generated version is: {version}")
     logging.debug(f"Safe version is: {safe_version}")
+    logging.debug(f"Java version is: {java_version}")
+
     print(f"::set-output name=version::{version}")
     print(f"::set-output name=safe_version::{safe_version}")
+    print(f"::set-output name=safe_version::{java_version}")
 
 
 def main():
@@ -275,6 +283,7 @@ def main():
 
     else:
         logging.info("Tag setup for branch '%s' is skipped", branch)
+
 
 if __name__ == '__main__':
     sys.exit(main())
