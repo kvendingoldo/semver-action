@@ -20,7 +20,6 @@ outputs:
   java_version:
     description: 'Version tag in Java format'
 
-
 runs:
   using: 'docker'
   image: 'Dockerfile'
