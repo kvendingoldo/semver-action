@@ -1,6 +1,7 @@
-FROM python:3.8-alpine
+FROM python:3.10-alpine
 
-RUN apk --no-cache add git \
+RUN apk update \
+ && apk -X https://dl-cdn.alpinelinux.org/alpine/edge/main --no-cache add git>2.35.2-r0 \
  && mkdir /app \
  && rm -rf /var/lib/apt/lists/*
 

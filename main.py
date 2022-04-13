@@ -216,6 +216,13 @@ def main():
     repo_path = os.getcwd()
     repo = real_git.Repo(repo_path)
 
+    # NOTE: it's available only for git v2.35.2+
+    # DETAILS:
+    #  https://github.com/actions/checkout/issues/766
+    #  https://github.com/actions/checkout/issues/760
+    gh_workspace=os.getenv("GITHUB_WORKSPACE")
+    os.system(f"git config --global --add safe.directory {gh_workspace}")
+
     try:
         last_tag = repo.git.describe('--tags', '--abbrev=0', '--candidates=100')
     except GitCommandError as e:
