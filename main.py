@@ -206,7 +206,7 @@ def actions_output(version):
 
     print(f"::set-output name=version::{version}")
     print(f"::set-output name=safe_version::{safe_version}")
-    print(f"::set-output name=safe_version::{java_version}")
+    print(f"::set-output name=java_version::{java_version}")
 
 
 def main():
