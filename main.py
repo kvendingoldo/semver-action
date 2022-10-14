@@ -34,13 +34,13 @@ def git_get_latest_tag(ref='HEAD', candidates=100):
 
 def get_base_tag(ref='HEAD'):
     latest_tag_string = git_get_latest_tag(ref, 100)
-    logging.info(f"Read latest upstream tag: {latest_tag_string}")
+    logging.debug(f"Read latest upstream tag: {latest_tag_string}")
     if latest_tag_string:
         latest_tag_base_parsed = semver.VersionInfo.parse(latest_tag_string.split('/')[-1])
     else:
         logging.warning("Unable to get base version. Returning %s", INIT_VERSION)
         latest_tag_base_parsed = semver.VersionInfo.parse(INIT_VERSION)
-    logging.info('Selected base version is %s', str(latest_tag_base_parsed))
+    logging.debug('Selected base version is %s', str(latest_tag_base_parsed))
     return latest_tag_base_parsed
 
 
@@ -107,10 +107,10 @@ def get_versioned_tag_value(version, branch, commit_message):
         res = str(version)
     else:
         if branch == PRIMARY_BRANCH:
-            logging.info("Generating release tag for %s, release tag: rc/%s", branch, version)
+            logging.info("Generating release tag for %s, tag: rc/%s", branch, version)
             res = f"rc/{str(version)}"
         elif branch.startswith("release/"):
-            logging.info("Generating release tag for %s, release tag: %s", branch, version)
+            logging.info("Generating release tag for %s, tag: %s", branch, version)
             res = str(version)
         else:
             res = None
@@ -237,19 +237,25 @@ def main():
         tag_for_head = repo.git.describe("--exact-match", "--tags", "HEAD")
     except Exception:
         tag_for_head = ''
-        logging.info("No tag for HEAD: %s", tag_for_head)
+
 
     new_version = get_bumped_version(last_tag, base_version, branch, commit_message, tag_for_head)
     tag = get_versioned_tag_value(new_version, branch, commit_message)
 
     if tag:
-        logging.info(f"last_tag: {last_tag}")
-        logging.info(f"base version: {base_version}")
-        logging.info(f"new_version: {new_version}")
-        logging.info(f"tag value: {tag}")
-        logging.info(f"branch: {branch}")
-        logging.info(f"message: {commit_message}")
-        logging.info(f"tag_for_head: {tag_for_head}")
+        logging.info(f"Current branch is: {branch}")
+        logging.info(f"Latest commit message: {commit_message}")
+
+        logging.info(f"Latest upstream base version is: {base_version}")
+        logging.info(f"Latest tag value is: {last_tag}")
+
+        if tag_for_head:
+            logging.info(f"Current tag for head: {tag_for_head}")
+        else:
+            logging.info("No tag for HEAD")
+
+        logging.info(f"New base version is: {new_version}")
+        logging.info(f"New tag value is: {tag}")
 
         if '[RELEASE]' in commit_message and branch == PRIMARY_BRANCH:
             logging.info(f"Creating Release for last tag: {last_tag}")
