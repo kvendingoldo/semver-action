@@ -141,7 +141,7 @@ def tag_not_needed(branch):
 
 
 def get_previous_release(tags, last_tag):
-    logging.info("Changelog tag list: %s", tags)
+    logging.debug("Changelog tag list: %s", tags)
 
     # Remove tags created after last_tag (current tag)
     for tag in tags[:]:
@@ -150,7 +150,7 @@ def get_previous_release(tags, last_tag):
         else:
             break
 
-    logging.info("Changed changelog tag list: %s ", tags)
+    logging.debug("Changed changelog tag list: %s ", tags)
 
     # Get previous release i.e. x.y.z
     for tag in tags[1:]:
@@ -167,7 +167,6 @@ def get_previous_release(tags, last_tag):
     # Case when project is new and we got only one tag, thus previous tag will be None
     if len(tags[1:]) == 0:
         previous_release = None
-    logging.info("Previous release: %s ", previous_release)
 
     return previous_release
 
@@ -177,11 +176,11 @@ def create_release_branch(repo, new_version):
                                                    join(map(str, new_version[0:2])))
     try:
         repo.git.checkout('-b', release_branch)
-        logging.info(f"Release branch: {release_branch} successfully created")
+        logging.info(f"Release branch {release_branch} successfully created")
         repo.git.push('-u', 'origin', release_branch)
-        logging.info(f"Release branch: {release_branch} successfully pushed")
+        logging.info(f"Release branch {release_branch} successfully pushed")
     except Exception as err:
-        logging.info(f"Create release branch: {release_branch} error: {err}")
+        logging.info(f"Failed to create release branch {release_branch}. Error: {err}")
 
 
 def parse_args():
@@ -238,12 +237,11 @@ def main():
     except Exception:
         tag_for_head = ''
 
-
     new_version = get_bumped_version(last_tag, base_version, branch, commit_message, tag_for_head)
     tag = get_versioned_tag_value(new_version, branch, commit_message)
 
     if tag:
-        logging.info(f"Current branch is: {branch}")
+        logging.info(f"The current branch is: {branch}")
         logging.info(f"Latest commit message: {commit_message}")
 
         logging.info(f"Latest upstream base version is: {base_version}")
@@ -252,20 +250,19 @@ def main():
         if tag_for_head:
             logging.info(f"Current tag for head: {tag_for_head}")
         else:
-            logging.info("No tag for HEAD")
+            logging.info("There is no tag for HEAD")
 
         logging.info(f"New base version is: {new_version}")
         logging.info(f"New tag value is: {tag}")
 
         if '[RELEASE]' in commit_message and branch == PRIMARY_BRANCH:
-            logging.info(f"Creating Release for last tag: {last_tag}")
+            logging.info(f"Creating release for last tag: {last_tag}")
 
             tags = repo.git.tag(sort='-creatordate').split('\n')
             previous_release = get_previous_release(tags, last_tag)
 
-            logging.info(f"Previous release: {previous_release}")
-
-            logging.info(f"Creating tag: {tag}")
+            logging.info(f"Previous release version is: {previous_release}")
+            logging.info(f"New release version is: {tag}")
             repo.git.tag(tag, 'HEAD')
 
             if cmd_args.no_push:
