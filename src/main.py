@@ -90,7 +90,7 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
         return 'patch'
 
     # Bump for custom branch
-    if commit_branch is not None and BUMP_FOR_CUSTOM_BRANCH:
+    if commit_branch is not None and ENABLE_CUSTOM_BRANCHES:
         if '[BUMP-MAJOR]' in commit_message:
             logging.info(f"Major bump type detected from commit message {commit_message}")
             return 'major'
