@@ -5,7 +5,7 @@ RUN apk update \
  && mkdir /app \
  && rm -rf /var/lib/apt/lists/*
 
-COPY main.py /app/main.py
+COPY src/main.py /app/main.py
 COPY requirements.txt /app/requirements.txt
 RUN pip3 install -r /app/requirements.txt
 
