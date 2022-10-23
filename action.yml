@@ -11,6 +11,10 @@ inputs:
     description: 'Initial project version'
     required: false
     default: '0.0.0'
+  enable_custom_branches:
+    description: 'Script will produce fc/x.y.z version for custom branches if true'
+    required: false
+    default: 'true'
 
 outputs:
   version:

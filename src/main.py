@@ -13,6 +13,11 @@ from git import GitCommandError
 INIT_VERSION = os.getenv("INPUT_INIT_VERSION")
 PRIMARY_BRANCH = os.getenv("INPUT_PRIMARY_BRANCH")
 
+if os.getenv("INPUT_ENABLE_CUSTOM_BRANCHES") == "true":
+    ENABLE_CUSTOM_BRANCHES = True
+else:
+    ENABLE_CUSTOM_BRANCHES = False
+
 
 def git(*args):
     output = subprocess.check_output(["git"] + list(args)).decode().strip()
@@ -51,6 +56,7 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
     if tag_for_head.startswith('rc/') and commit_branch is None:
         logging.info("Tag for HEAD already exists, no bump required {base_version}")
         return ''
+
     # Bump for primary branch
     if commit_branch == PRIMARY_BRANCH:
         if '[BUMP-MAJOR]' in commit_message:
@@ -82,6 +88,16 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
             return ''
         logging.info('Release branch update detected. Need to bump patch.')
         return 'patch'
+
+    # Bump for custom branch
+    if commit_branch is not None and BUMP_FOR_CUSTOM_BRANCH:
+        if '[BUMP-MAJOR]' in commit_message:
+            logging.info(f"Major bump type detected from commit message {commit_message}")
+            return 'major'
+
+        logging.info('%s updated. Minor bump required.', commit_branch)
+        return 'minor'
+
     logging.info('No need for bump detected. Returning empty bump type')
     return ''
 
@@ -107,11 +123,14 @@ def get_versioned_tag_value(version, branch, commit_message):
         res = str(version)
     else:
         if branch == PRIMARY_BRANCH:
-            logging.info("Generating release tag for %s, tag: rc/%s", branch, version)
             res = f"rc/{str(version)}"
+            logging.info("Generating release tag for %s, tag: %s", branch, res)
         elif branch.startswith("release/"):
-            logging.info("Generating release tag for %s, tag: %s", branch, version)
             res = str(version)
+            logging.info("Generating release tag for %s, tag: %s", branch, res)
+        elif ENABLE_CUSTOM_BRANCHES:
+            res = f"fc/{str(version)}"
+            logging.info("Generating release tag for %s, tag: %s", branch, res)
         else:
             res = None
     return res
@@ -240,21 +259,21 @@ def main():
     new_version = get_bumped_version(last_tag, base_version, branch, commit_message, tag_for_head)
     tag = get_versioned_tag_value(new_version, branch, commit_message)
 
-    if tag:
-        logging.info(f"The current branch is: {branch}")
-        logging.info(f"Latest commit message: {commit_message}")
+    logging.info(f"The current branch is: {branch}")
+    logging.info(f"Latest commit message: {commit_message}")
 
-        logging.info(f"Latest upstream base version is: {base_version}")
-        logging.info(f"Latest tag value is: {last_tag}")
+    logging.info(f"Latest upstream base version is: {base_version}")
+    logging.info(f"Latest tag value is: {last_tag}")
 
-        if tag_for_head:
-            logging.info(f"Current tag for head: {tag_for_head}")
-        else:
-            logging.info("There is no tag for HEAD")
+    if tag_for_head:
+        logging.info(f"Current tag for head: {tag_for_head}")
+    else:
+        logging.info("There is no tag for HEAD")
 
-        logging.info(f"New base version is: {new_version}")
-        logging.info(f"New tag value is: {tag}")
+    logging.info(f"New base version is: {new_version}")
+    logging.info(f"New tag value is: {tag}")
 
+    if branch == PRIMARY_BRANCH or branch.startswith("release/"):
         if '[RELEASE]' in commit_message and branch == PRIMARY_BRANCH:
             logging.info(f"Creating release for last tag: {last_tag}")
 
@@ -292,7 +311,10 @@ def main():
         actions_output(tag)
 
     else:
-        logging.info("Tag setup for branch '%s' is skipped", branch)
+        if ENABLE_CUSTOM_BRANCHES:
+            actions_output(tag)
+        else:
+            logging.info("Tag setup for branch '%s' is skipped", branch)
 
 
 if __name__ == '__main__':
