@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import codecs
 import os
 import sys
 import logging
@@ -43,16 +42,18 @@ def git_get_latest_tag(ref='HEAD', candidates=100):
     return latest_tag
 
 
-def get_base_tag(ref='HEAD'):
-    latest_tag_string = git_get_latest_tag(ref, 100)
-    logging.debug(f"Read latest upstream tag: {latest_tag_string}")
-    if latest_tag_string:
-        latest_tag_base_parsed = semver.VersionInfo.parse(latest_tag_string.split('/')[-1])
+def get_base_version(ref='HEAD'):
+    latest_tag = git_get_latest_tag(ref, 100)
+    logging.debug(f"Read latest upstream tag: {latest_tag}")
+
+    if latest_tag:
+        latest_base_version = semver.VersionInfo.parse(latest_tag.split('/')[-1])
     else:
         logging.warning("Unable to get base version. Returning %s", INIT_VERSION)
-        latest_tag_base_parsed = semver.VersionInfo.parse(INIT_VERSION)
+        latest_base_version = semver.VersionInfo.parse(INIT_VERSION)
+
     logging.debug('Selected base version is %s', str(latest_tag_base_parsed))
-    return latest_tag_base_parsed
+    return latest_base_version
 
 
 def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for_head):
@@ -221,6 +222,8 @@ def actions_output(version):
 
     if "rc" in version:
         java_version = version.replace("rc/", "") + "-RC"
+    elif "fc" in version:
+        java_version = version.replace("fc/", "") + "-FC"
     else:
         java_version = version
 
@@ -228,9 +231,11 @@ def actions_output(version):
     logging.debug(f"Safe version is: {safe_version}")
     logging.debug(f"Java version is: {java_version}")
 
-    print(f"::set-output name=version::{version}")
-    print(f"::set-output name=safe_version::{safe_version}")
-    print(f"::set-output name=java_version::{java_version}")
+    if os.getenv("GITHUB_OUTPUT"):
+        with open(str(os.getenv("GITHUB_OUTPUT")), "a") as env:
+            print(f"version={version}", file=env)
+            print(f"safe_version={safe_version}", file=env)
+            print(f"java_version={java_version}", file=env)
 
 
 def main():
@@ -253,8 +258,9 @@ def main():
         last_tag = None
         logging.info(f"Git command output: {e}")
 
-    base_version = get_base_tag()
-    branch = repo.git.branch('--show-current')
+    # here we're getting base version without any RC/FC suffixes
+    base_version = get_base_version()
+    current_branch = repo.active_branch
 
     try:
         tag_for_head = repo.git.describe("--exact-match", "--tags", "HEAD")
@@ -263,16 +269,16 @@ def main():
 
     commit_message = repo.head.reference.commit.message
 
-    logging.info(f"The current branch is: {branch}")
+    logging.info(f"The current branch is: {current_branch}")
     logging.info(f"Latest commit message: {commit_message}")
 
     if SHA_FOR_CUSTOM_BRANCHES:
-        tag = codecs.encode(repo.head.reference.commit.binsha, 'hex').decode('utf-8')[0:7]
+        tag = repo.head.object.hexsha[0:7]
     else:
-        new_version = get_bumped_version(last_tag, base_version, branch, commit_message, tag_for_head)
-        tag = get_versioned_tag_value(new_version, branch, commit_message)
+        new_version = get_bumped_version(last_tag, base_version, current_branch, commit_message, tag_for_head)
+        tag = get_versioned_tag_value(new_version, current_branch, commit_message)
 
-        logging.info(f"Latest upstream base version is: {base_version}")
+        logging.info(f"Latest upstream BASE version is: {base_version}")
         logging.info(f"Latest tag value is: {last_tag}")
 
         if tag_for_head:
@@ -280,11 +286,11 @@ def main():
         else:
             logging.info("There is no tag for HEAD")
 
-        logging.info(f"New base version is: {new_version}")
+        logging.info(f"New BASE version is: {new_version}")
         logging.info(f"New tag value is: {tag}")
 
-    if branch == PRIMARY_BRANCH or branch.startswith("release/"):
-        if '[RELEASE]' in commit_message and branch == PRIMARY_BRANCH:
+    if current_branch == PRIMARY_BRANCH or current_branch.startswith("release/"):
+        if '[RELEASE]' in commit_message and current_branch == PRIMARY_BRANCH:
             logging.info(f"Creating release for last tag: {last_tag}")
 
             tags = repo.git.tag(sort='-creatordate').split('\n')
@@ -300,10 +306,10 @@ def main():
                 return 0
             else:
                 create_release_branch(repo, new_version)
-                repo.git.checkout(branch)
+                repo.git.checkout(current_branch)
                 repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
         else:
-            if tag_not_needed(branch):
+            if tag_not_needed(current_branch):
                 logging.info('Setting new tag is not needed. Commit has already tagged. Exiting.')
                 actions_output(last_tag)
                 return 0
@@ -325,7 +331,7 @@ def main():
             logging.info(f"It is a build for custom branch (non {PRIMARY_BRANCH} or release). Tag won't be created")
             actions_output(tag)
         else:
-            logging.info("Tag setup for branch '%s' is skipped", branch)
+            logging.info("Tag setup for branch '%s' is skipped", current_branch)
 
 
 if __name__ == '__main__':
