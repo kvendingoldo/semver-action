@@ -312,6 +312,7 @@ def main():
 
     else:
         if ENABLE_CUSTOM_BRANCHES:
+            logging.info(f"It is a build for custom branch (non {PRIMARY_BRANCH} or release). Tag won't be created")
             actions_output(tag)
         else:
             logging.info("Tag setup for branch '%s' is skipped", branch)
