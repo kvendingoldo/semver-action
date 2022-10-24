@@ -91,15 +91,6 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
         logging.info('Release branch update detected. Need to bump patch.')
         return 'patch'
 
-    # Bump for custom branch
-    if commit_branch is not None and ENABLE_CUSTOM_BRANCHES:
-        if '[BUMP-MAJOR]' in commit_message:
-            logging.info(f"Major bump type detected from commit message {commit_message}")
-            return 'major'
-
-        logging.info('%s updated. Minor bump required.', commit_branch)
-        return 'minor'
-
     logging.info('No need for bump detected. Returning empty bump type')
     return ''
 
@@ -129,9 +120,6 @@ def get_versioned_tag_value(version, branch, commit_message):
             logging.info("Generating release tag for %s, tag: %s", branch, res)
         elif branch.startswith("release/"):
             res = str(version)
-            logging.info("Generating release tag for %s, tag: %s", branch, res)
-        elif ENABLE_CUSTOM_BRANCHES:
-            res = f"fc/{str(version)}"
             logging.info("Generating release tag for %s, tag: %s", branch, res)
         else:
             res = None
