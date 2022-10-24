@@ -15,6 +15,10 @@ inputs:
     description: 'Script will produce fc/x.y.z version for custom branches if true'
     required: false
     default: 'true'
+  sha_for_custom_branches:
+    description: 'Commit SHA will be used for custom branches as version if true'
+    required: false
+    default: 'true'
 
 outputs:
   version:

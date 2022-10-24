@@ -18,6 +18,11 @@ if os.getenv("INPUT_ENABLE_CUSTOM_BRANCHES") == "true":
 else:
     ENABLE_CUSTOM_BRANCHES = False
 
+if os.getenv("INPUT_SHA_FOR_CUSTOM_BRANCHES") == "true":
+    SHA_FOR_CUSTOM_BRANCHES = True
+else:
+    SHA_FOR_CUSTOM_BRANCHES = False
+
 
 def git(*args):
     output = subprocess.check_output(["git"] + list(args)).decode().strip()
@@ -256,22 +261,25 @@ def main():
     except Exception:
         tag_for_head = ''
 
-    new_version = get_bumped_version(last_tag, base_version, branch, commit_message, tag_for_head)
-    tag = get_versioned_tag_value(new_version, branch, commit_message)
-
     logging.info(f"The current branch is: {branch}")
     logging.info(f"Latest commit message: {commit_message}")
 
-    logging.info(f"Latest upstream base version is: {base_version}")
-    logging.info(f"Latest tag value is: {last_tag}")
-
-    if tag_for_head:
-        logging.info(f"Current tag for head: {tag_for_head}")
+    if SHA_FOR_CUSTOM_BRANCHES:
+        tag = repo.head.reference.commit.binsha
     else:
-        logging.info("There is no tag for HEAD")
+        new_version = get_bumped_version(last_tag, base_version, branch, commit_message, tag_for_head)
+        tag = get_versioned_tag_value(new_version, branch, commit_message)
 
-    logging.info(f"New base version is: {new_version}")
-    logging.info(f"New tag value is: {tag}")
+        logging.info(f"Latest upstream base version is: {base_version}")
+        logging.info(f"Latest tag value is: {last_tag}")
+
+        if tag_for_head:
+            logging.info(f"Current tag for head: {tag_for_head}")
+        else:
+            logging.info("There is no tag for HEAD")
+
+        logging.info(f"New base version is: {new_version}")
+        logging.info(f"New tag value is: {tag}")
 
     if branch == PRIMARY_BRANCH or branch.startswith("release/"):
         if '[RELEASE]' in commit_message and branch == PRIMARY_BRANCH:
