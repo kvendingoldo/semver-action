@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import codecs
 import os
 import sys
 import logging
@@ -254,18 +255,19 @@ def main():
 
     base_version = get_base_tag()
     branch = repo.git.branch('--show-current')
-    commit_message = repo.head.reference.commit.message
 
     try:
         tag_for_head = repo.git.describe("--exact-match", "--tags", "HEAD")
     except Exception:
         tag_for_head = ''
 
+    commit_message = repo.head.reference.commit.message
+
     logging.info(f"The current branch is: {branch}")
     logging.info(f"Latest commit message: {commit_message}")
 
     if SHA_FOR_CUSTOM_BRANCHES:
-        tag = repo.head.reference.commit.binsha
+        tag = codecs.encode(repo.head.reference.commit.binsha, 'hex').decode('utf-8')[0:7]
     else:
         new_version = get_bumped_version(last_tag, base_version, branch, commit_message, tag_for_head)
         tag = get_versioned_tag_value(new_version, branch, commit_message)
