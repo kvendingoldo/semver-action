@@ -18,11 +18,6 @@ if os.getenv("INPUT_ENABLE_CUSTOM_BRANCHES") == "true":
 else:
     ENABLE_CUSTOM_BRANCHES = False
 
-if os.getenv("INPUT_SHA_FOR_CUSTOM_BRANCHES") == "true":
-    SHA_FOR_CUSTOM_BRANCHES = True
-else:
-    SHA_FOR_CUSTOM_BRANCHES = False
-
 
 def git(*args):
     output = subprocess.check_output(["git"] + list(args)).decode().strip()
@@ -272,10 +267,7 @@ def main():
     logging.info(f"The current branch is: {current_branch}")
     logging.info(f"Latest commit message: {commit_message}")
 
-    if SHA_FOR_CUSTOM_BRANCHES:
-        tag = "sha/" + str(repo.head.object.hexsha[0:7])
-        logging.info(f"Custom build version is: {tag}")
-    else:
+    if current_branch == PRIMARY_BRANCH or current_branch.startswith("release/"):
         new_version = get_bumped_version(last_tag, base_version, current_branch, commit_message, tag_for_head)
         tag = get_versioned_tag_value(new_version, current_branch, commit_message)
 
@@ -290,7 +282,6 @@ def main():
         logging.info(f"New BASE version is: {new_version}")
         logging.info(f"New tag value is: {tag}")
 
-    if current_branch == PRIMARY_BRANCH or current_branch.startswith("release/"):
         if '[RELEASE]' in commit_message and current_branch == PRIMARY_BRANCH:
             logging.info(f"Creating release for last tag: {last_tag}")
 
@@ -326,13 +317,13 @@ def main():
             repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
 
         actions_output(tag)
-
+    elif ENABLE_CUSTOM_BRANCHES:
+        tag = "sha/" + str(repo.head.object.hexsha[0:7])
+        logging.info(f"Custom build version is: {tag}")
+        logging.info(f"It is a build for custom branch (non {PRIMARY_BRANCH} or release). Tag won't be created")
+        actions_output(tag)
     else:
-        if ENABLE_CUSTOM_BRANCHES:
-            logging.info(f"It is a build for custom branch (non {PRIMARY_BRANCH} or release). Tag won't be created")
-            actions_output(tag)
-        else:
-            logging.info("Tag setup for branch '%s' is skipped", current_branch)
+        logging.info("Tag setup for branch '%s' is skipped", current_branch)
 
 
 if __name__ == '__main__':

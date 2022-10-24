@@ -12,11 +12,7 @@ inputs:
     required: false
     default: '0.0.0'
   enable_custom_branches:
-    description: 'Script will produce fc/x.y.z version for custom branches if true'
-    required: false
-    default: 'true'
-  sha_for_custom_branches:
-    description: 'Commit SHA will be used for custom branches as version if true'
+    description: 'Script will produce sha/x.y.z version for custom branches if true'
     required: false
     default: 'true'
 
