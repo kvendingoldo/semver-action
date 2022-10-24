@@ -294,8 +294,8 @@ def main():
                 repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
         else:
             if tag_not_needed(branch):
-                logging.info('Setting new tag is not needed. Commit already tagged. Exiting.')
-                actions_output(tag)
+                logging.info('Setting new tag is not needed. Commit has already tagged. Exiting.')
+                actions_output(last_tag)
                 return 0
 
             logging.info(f"Creating tag: {tag}")
