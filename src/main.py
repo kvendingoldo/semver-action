@@ -260,7 +260,7 @@ def main():
 
     # here we're getting base version without any RC/FC suffixes
     base_version = get_base_version()
-    current_branch = repo.active_branch
+    current_branch = str(repo.active_branch)
 
     try:
         tag_for_head = repo.git.describe("--exact-match", "--tags", "HEAD")
