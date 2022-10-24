@@ -52,7 +52,7 @@ def get_base_version(ref='HEAD'):
         logging.warning("Unable to get base version. Returning %s", INIT_VERSION)
         latest_base_version = semver.VersionInfo.parse(INIT_VERSION)
 
-    logging.debug('Selected base version is %s', str(latest_tag_base_parsed))
+    logging.debug('Selected base version is %s', str(latest_base_version))
     return latest_base_version
 
 
