@@ -273,7 +273,8 @@ def main():
     logging.info(f"Latest commit message: {commit_message}")
 
     if SHA_FOR_CUSTOM_BRANCHES:
-        tag = repo.head.object.hexsha[0:7]
+        tag = "sha/" + str(repo.head.object.hexsha[0:7])
+        logging.info(f"Custom build version is: {tag}")
     else:
         new_version = get_bumped_version(last_tag, base_version, current_branch, commit_message, tag_for_head)
         tag = get_versioned_tag_value(new_version, current_branch, commit_message)
