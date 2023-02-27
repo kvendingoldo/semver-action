@@ -29,6 +29,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: write
     steps:
       -
         uses: actions/checkout@v3
@@ -37,7 +39,11 @@ jobs:
       -
         name: Set application version
         id: set_version
-        uses: kvendingoldo/semver-action@v1.10
+        uses: kvendingoldo/semver-action@v1.12
+        with:
+          enable_github_releases: true
+          release_tag_prefix: "v"
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
       -
         name: Generated version
         run: echo ${{ steps.set_version.outputs.version }}
