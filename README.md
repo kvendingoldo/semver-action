@@ -15,6 +15,21 @@ Versions in a release branch will have a format `x.y.z`.
   * The initial project version
   * It's optional variable, default value is `0.0.0`
 
+* `enable_custom_branches`
+  * If true, script will produce sha/x.y.z version for custom branches
+  * It's optional variable, default value is `true`
+
+* `enable_github_releases`
+  * If true, GitHub releases will be created as well as Git branches. Requires github_token
+  * It's optional variable, default value is `0.0.0`
+
+* `github_token`
+  * GitHub token that requires for operate under GitHub. You can use `${{ secrets.GITHUB_TOKEN }}`, check example
+  * It's optional variable, empty by default
+
+* `release_tag_prefix`
+  * Prefix for Git release tags
+  * It's optional variable, empty by default
 
 ## Action example
 

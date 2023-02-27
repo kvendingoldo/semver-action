@@ -16,7 +16,7 @@ inputs:
     required: false
     default: '0.0.0'
   enable_custom_branches:
-    description: 'Script will produce sha/x.y.z version for custom branches if true'
+    description: 'If true, script will produce sha/x.y.z version for custom branches'
     required: false
     default: 'true'
   enable_github_releases:
@@ -24,7 +24,7 @@ inputs:
     required: false
     default: 'false'
   github_token:
-    description: 'GitHub token that requires for operate under GitHub'
+    description: 'GitHub token that requires for operate under GitHub. You can use ${{ secrets.GITHUB_TOKEN }}, check example'
     required: false
     default: ''
   release_tag_prefix:
