@@ -1,0 +1,49 @@
+name: pipeline
+
+on:
+  push:
+    tags:
+      - '**'
+
+env:
+  image_name: semver-action
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      -
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: all
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      -
+        name: Calculate image version
+        id: get_variables
+        run: |
+          version=$(echo $GITHUB_REF | cut -d/ -f3- | sed 's/\//-/g')       
+          echo "version=${version}" >> $GITHUB_OUTPUT
+      -
+        name: Build docker image and push it
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            kvendingoldo/${{ env.image_name }}:latest
+            kvendingoldo/${{ env.image_name }}:${{ steps.get_variables.outputs.version }}

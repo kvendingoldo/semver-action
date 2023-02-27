@@ -1,6 +1,10 @@
 name: 'SemVer workflow'
-description: 'Updates version tags, creates release branches'
+description: 'Updates version tags, creates release branches and GitHub releases'
 author: 'kvendingoldo'
+
+branding:
+  icon: 'play-circle'
+  color: 'green'
 
 inputs:
   primary_branch:
@@ -15,15 +19,30 @@ inputs:
     description: 'Script will produce sha/x.y.z version for custom branches if true'
     required: false
     default: 'true'
+  enable_github_releases:
+    description: 'If true, GitHub releases will be created as well as Git branches. Requires github_token'
+    required: false
+    default: 'false'
+  github_token:
+    description: 'GitHub token that requires for operate under GitHub'
+    required: false
+    default: ''
+  release_tag_prefix:
+    description: 'Prefix for Git release tags'
+    required: false
+    default: ''
 
 outputs:
   version:
     description: 'Version tag'
   safe_version:
     description: 'Version tag without specific symbols'
+  without_prefix_version:
+    description: 'Version tag without tag_prefix'
   java_version:
     description: 'Version tag in Java format'
 
 runs:
   using: 'docker'
-  image: 'Dockerfile'
+  #image: 'Dockerfile'
+  image: 'docker://kvendingoldo/semver-action:v1.12'
