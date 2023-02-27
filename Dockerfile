@@ -1,4 +1,4 @@
-FROM python:3.10-alpine
+FROM python:3.11-alpine
 
 RUN apk update \
  && apk -X https://dl-cdn.alpinelinux.org/alpine/edge/main --no-cache add git>2.35.2-r0 \
