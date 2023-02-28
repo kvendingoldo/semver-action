@@ -24,7 +24,7 @@ inputs:
     required: false
     default: 'false'
   github_token:
-    description: 'GitHub token that requires for operate under GitHub. You can use ${{ secrets.GITHUB_TOKEN }}, check example'
+    description: 'GitHub token that requires for operate under GitHub. You can use secrets GITHUB_TOKEN, check example'
     required: false
     default: ''
   release_tag_prefix:
@@ -45,4 +45,4 @@ outputs:
 runs:
   using: 'docker'
   #image: 'Dockerfile'
-  image: 'docker://kvendingoldo/semver-action:v1.14'
+  image: 'docker://kvendingoldo/semver-action:v1.15'
