@@ -77,12 +77,17 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
             return 'major'
         if '[RELEASE]' in commit_message:
             logging.info("Release detected in commit: %s", commit_message)
-            if last_tag.startswith('rc/'):
-                logging.info("last_tag starts with rc/: %s, no bump", last_tag)
-                res = ''
-            else:
-                logging.info("last_tag without rc/: %s, minor bump", last_tag)
+
+            if last_tag is None:
+                logging.info("last_tag is None, minor bump")
                 res = 'minor'
+            else:
+                if last_tag.startswith('rc/'):
+                    logging.info("last_tag starts with rc/: %s, no bump", last_tag)
+                    res = ''
+                else:
+                    logging.info("last_tag without rc/: %s, minor bump", last_tag)
+                    res = 'minor'
             return res
 
         logging.info('%s updated. Minor bump required.', commit_branch)
@@ -290,7 +295,8 @@ def main():
 
     try:
         tag_for_head = repo.git.describe("--exact-match", "--tags", "HEAD")
-    except Exception:
+    except Exception as ex:
+        logging.error(ex)
         tag_for_head = ''
 
     commit_message = repo.head.reference.commit.message
