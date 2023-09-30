@@ -76,7 +76,7 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
             logging.info("Major bump type detected from commit message %s", commit_message)
             return 'major'
         if '[RELEASE]' in commit_message:
-            logging.info("Release detected in commit: %s", commit_message)
+            logging.info("Release is detected in commit: %s", commit_message)
 
             if last_tag is None:
                 logging.info("last_tag is None, minor bump")
@@ -89,6 +89,15 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
                     logging.info("last_tag without rc/: %s, minor bump", last_tag)
                     res = 'minor'
             return res
+
+        if any(keyword.lower() in commit_message.lower() for keyword in ['[hotfix]', '[fix]']):
+            logging.info("Fix is detected in commit: %s", commit_message)
+            return 'patch'
+
+        patch_prefixes = ['fix/', 'hotfix/', 'HOTFIX/', 'FIX/']
+        if any(commit_branch.startswith(prefix) for prefix in patch_prefixes):
+            logging.info("Fix branch is detected: %s", commit_branch)
+            return 'patch'
 
         logging.info('%s updated. Minor bump required.', commit_branch)
         return 'minor'
