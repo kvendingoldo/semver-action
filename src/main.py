@@ -90,7 +90,7 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
                     res = 'minor'
             return res
 
-        if any(keyword.lower() in commit_message.lower() for keyword in ['[hotfix]', '[fix]']):
+        if any(keyword.lower() in commit_message.lower() for keyword in ['[hotfix]', '[fix]', 'fix:']):
             logging.info("Fix is detected in commit: %s", commit_message)
             return 'patch'
 
