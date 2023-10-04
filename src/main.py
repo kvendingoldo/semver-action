@@ -190,7 +190,12 @@ def get_previous_release(tags, last_tag):
     for tag in tags[1:]:
         if not last_tag.endswith('.0'):
             # Select first tag in tags which starts with X.Y from last tag
-            if tag.startswith('.'.join(last_tag.split('.')[:2])):
+            last_tag_xy = '.'.join(last_tag.split('.')[:2])
+
+            if tag.startswith(last_tag_xy):
+                previous_release = tag
+                break
+            elif tag.startswith(f"rc/{last_tag_xy}"):
                 previous_release = tag
                 break
         elif tag.startswith('rc/') or not tag.endswith('.0'):
@@ -280,7 +285,7 @@ def actions_output(version):
 
 def main():
     cmd_args = parse_args()
-    logging.basicConfig(level=logging.INFO)
+    logging.getLogger().setLevel(level=os.getenv('LOG_LEVEL', 'INFO').upper())
 
     repo_path = os.getcwd()
     repo = real_git.Repo(repo_path)
