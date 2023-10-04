@@ -31,6 +31,10 @@ inputs:
     description: 'Prefix for Git release tags'
     required: false
     default: ''
+  log_level:
+    description: 'Semver log level'
+    required: false
+    default: 'INFO'
 
 outputs:
   version:
@@ -45,4 +49,4 @@ outputs:
 runs:
   using: 'docker'
   #image: 'Dockerfile'
-  image: 'docker://kvendingoldo/semver-action:v1.18'
+  image: 'docker://kvendingoldo/semver-action:v1.19'
