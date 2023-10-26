@@ -31,6 +31,16 @@ Versions in a release branch will have a format `x.y.z`.
   * Prefix for Git release tags
   * It's optional variable, empty by default
 
+## Output variables
+* `version`
+  * Version tag
+
+* `safe_version`
+  * Version tag without specific symbols. E.g. "/" will be replaced to "-"
+
+* `java_version`
+  * Version tag in Java format. E.g.: version rc/1.2.3 will be presented as 1.2.3-RC 
+
 ## Action example
 
 ```yaml
@@ -54,7 +64,7 @@ jobs:
       -
         name: Set application version
         id: set_version
-        uses: kvendingoldo/semver-action@v1.12
+        uses: kvendingoldo/semver-action@v1.18
         with:
           enable_github_releases: true
           release_tag_prefix: "v"

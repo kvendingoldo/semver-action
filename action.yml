@@ -41,8 +41,6 @@ outputs:
     description: 'Version tag'
   safe_version:
     description: 'Version tag without specific symbols'
-  without_prefix_version:
-    description: 'Version tag without tag_prefix'
   java_version:
     description: 'Version tag in Java format'
 
