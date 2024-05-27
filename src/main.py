@@ -318,11 +318,14 @@ def main():
     logging.info("The current branch is: %s", current_branch)
     logging.info("Latest commit message: %s", commit_message)
 
+    if TAG_PREFIX != "":
+        logging.info("Tag prefix: %s", TAG_PREFIX)
+
     if current_branch == PRIMARY_BRANCH or current_branch.startswith("release/"):
         new_version = get_bumped_version(last_tag, base_version, current_branch, commit_message, tag_for_head)
         tag = get_versioned_tag_value(new_version, current_branch, commit_message)
         if TAG_PREFIX != "":
-            tag = TAG_PREFIX + tag
+            tag = TAG_PREFIX + "/" + tag
 
         logging.info("Latest upstream BASE version is: %s", base_version)
         logging.info("Latest tag value is: %s", last_tag)
