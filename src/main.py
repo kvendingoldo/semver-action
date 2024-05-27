@@ -14,6 +14,7 @@ from git import GitCommandError
 
 INIT_VERSION = os.getenv("INPUT_INIT_VERSION")
 PRIMARY_BRANCH = os.getenv("INPUT_PRIMARY_BRANCH")
+RELEASE_TAG_PREFIX = os.getenv("INPUT_RELEASE_TAG_PREFIX", "")
 TAG_PREFIX = os.getenv("INPUT_TAG_PREFIX", "")
 GITHUB_TOKEN = os.environ.get("INPUT_GITHUB_TOKEN")
 GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
@@ -53,7 +54,7 @@ def get_base_version(ref='HEAD'):
     logging.debug("Read latest upstream tag: %s", latest_tag)
 
     if latest_tag:
-        latest_base_version = semver.VersionInfo.parse(latest_tag.replace(TAG_PREFIX, "").split('/')[-1])
+        latest_base_version = semver.VersionInfo.parse(latest_tag.replace(RELEASE_TAG_PREFIX, "").replace(TAG_PREFIX, "").split('/')[-1])
     else:
         logging.warning("Unable to get base version. Returning %s", INIT_VERSION)
         latest_base_version = semver.VersionInfo.parse(INIT_VERSION)
@@ -318,14 +319,12 @@ def main():
     logging.info("The current branch is: %s", current_branch)
     logging.info("Latest commit message: %s", commit_message)
 
-    if TAG_PREFIX != "":
-        logging.info("Tag prefix: %s", TAG_PREFIX)
+    logging.info("Release tag prefix: %s", RELEASE_TAG_PREFIX)
+    logging.info("Tag prefix: %s", TAG_PREFIX)
 
     if current_branch == PRIMARY_BRANCH or current_branch.startswith("release/"):
         new_version = get_bumped_version(last_tag, base_version, current_branch, commit_message, tag_for_head)
         tag = get_versioned_tag_value(new_version, current_branch, commit_message)
-        if TAG_PREFIX != "":
-            tag = TAG_PREFIX + "/" + tag
 
         logging.info("Latest upstream BASE version is: %s", base_version)
         logging.info("Latest tag value is: %s", last_tag)
@@ -339,6 +338,11 @@ def main():
         logging.info("New tag value is: %s", tag)
 
         if '[RELEASE]' in commit_message and current_branch == PRIMARY_BRANCH:
+            if RELEASE_TAG_PREFIX != "":
+                tag = RELEASE_TAG_PREFIX + tag
+            if TAG_PREFIX != "":
+                tag = TAG_PREFIX + tag
+
             logging.info("Creating release for last tag: %s", last_tag)
 
             tags = repo.git.tag(sort='-creatordate').split('\n')
@@ -360,6 +364,8 @@ def main():
                 repo.git.checkout(current_branch)
                 repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
         else:
+            if TAG_PREFIX != "":
+                tag = TAG_PREFIX + tag
             if tag_not_needed(current_branch):
                 logging.info('Setting new tag is not needed. Commit has already tagged. Exiting.')
                 actions_output(last_tag)
