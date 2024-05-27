@@ -64,11 +64,13 @@ jobs:
       -
         name: Set application version
         id: set_version
-        uses: kvendingoldo/semver-action@v1.18
+        uses: kvendingoldo/semver-action@v1.20.2
         with:
+          primary_branch: main
           enable_github_releases: true
           release_tag_prefix: "v"
           github_token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_prefix: "test/"
       -
         name: Generated version
         run: echo ${{ steps.set_version.outputs.version }}
