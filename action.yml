@@ -27,8 +27,8 @@ inputs:
     description: 'GitHub token that requires for operate under GitHub. You can use secrets GITHUB_TOKEN, check example'
     required: false
     default: ''
-  release_tag_prefix:
-    description: 'Prefix for Git release tags'
+  tag_prefix:
+    description: 'Prefix for Git tags'
     required: false
     default: ''
   log_level:
