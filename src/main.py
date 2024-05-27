@@ -152,7 +152,7 @@ def get_versioned_tag_value(version, branch, commit_message):
     return res
 
 
-def tag_not_needed(branch):
+def tag_not_needed(branch, new_tag):
     """
     Function checks if setting tag is not needed.
     Tag is not needed when a tag is already set on this commit.
@@ -171,7 +171,9 @@ def tag_not_needed(branch):
             # numbers (in version) git before letters (`r` in `rc/` is letter).
             # So if commit has both `rc/` and non-rc tag, the non-rc will be returned
             return False  # new tag *is* needed
-        return True  # new tag *is not* needed
+
+        if latest_tag_on_commit == new_tag:
+            return True # new tag *is not* needed
     return False  # new tag *is* needed
 
 
@@ -366,7 +368,7 @@ def main():
         else:
             if TAG_PREFIX != "":
                 tag = TAG_PREFIX + tag
-            if tag_not_needed(current_branch):
+            if tag_not_needed(current_branch, tag):
                 logging.info('Setting new tag is not needed. Commit has already tagged. Exiting.')
                 actions_output(last_tag)
                 return 0
