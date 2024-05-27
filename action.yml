@@ -51,4 +51,4 @@ outputs:
 runs:
   using: 'docker'
   #image: 'Dockerfile'
-  image: 'docker://kvendingoldo/semver-action:v1.20.2'
+  image: 'docker://kvendingoldo/semver-action:v1.20.4'
