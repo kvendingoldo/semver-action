@@ -6,6 +6,14 @@ By default, the action will create Git version tag per commit to primary and `re
 Any user can create `[RELEASE] <anything>` commit, after that action will create `release/x.y` branch.
 Versions in a release branch will have a format `x.y.z`.
 
+| Commit                                                    | version                                   | before   | after    |                                                                      Additional                                                                     |
+|-----------------------------------------------------------|-------------------------------------------|----------|----------|:---------------------------------------------------------------------------------------------------------------------------------------------------:|
+| [BUMP-MAJOR] in the commit header                         | increases the MAJOR version               | 0.7.0    | rc/1.0.0 |                                                                                                                                                     |
+| [RELEASE] in the commit header                            | removes the prefix (rc/ in our case)      | rc/0.7.0 | 0.7.0    | the release branch will be created, like release/0.7  if the VERSIONING_ENABLE_GITLAB_RELEASES variable is set, a release will be created in GitLab |
+| Without special words in the commit header                | increases MINOR version                   | rc/0.6.0 | rc/0.7.0 |                                                                                                                                                     |
+| Any of [FIX] [fix] [HOTFIX] in the commit header          | increases the PATCH version               | rc/1.0.0 | rc/1.0.1 |                                                                                                                                                     |
+| [BUMP-MAJOR] together with [RELEASE] in the commit header | increases the MAJOR version, make release | rc/1.0.1 | 2.0.0    |                                                                                                                                                     |
+
 ## Input variables
 * `primary_branch`
   * The primary branch that will be used for setting RC tag versions
