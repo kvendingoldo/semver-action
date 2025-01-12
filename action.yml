@@ -1,54 +1,54 @@
-name: 'SemVer workflow'
-description: 'Updates version tags, creates release branches and GitHub releases'
-author: 'kvendingoldo'
+name: "SemVer workflow"
+description: "Updates version tags, creates release branches and GitHub releases"
+author: "kvendingoldo"
 
 branding:
-  icon: 'play-circle'
-  color: 'green'
+  icon: "play-circle"
+  color: "green"
 
 inputs:
   primary_branch:
-    description: 'Main branch: master/main'
+    description: "Main branch: master/main"
     required: false
-    default: 'main'
+    default: "main"
   init_version:
-    description: 'Initial project version'
+    description: "Initial project version"
     required: false
-    default: '0.0.0'
+    default: "0.0.0"
   enable_custom_branches:
-    description: 'If true, script will produce sha/x.y.z version for custom branches'
+    description: "If true, script will produce sha/x.y.z version for custom branches"
     required: false
-    default: 'true'
+    default: "true"
   enable_github_releases:
-    description: 'If true, GitHub releases will be created as well as Git branches. Requires github_token'
+    description: "If true, GitHub releases will be created as well as Git branches. Requires github_token"
     required: false
-    default: 'false'
+    default: "false"
   github_token:
-    description: 'GitHub token that requires for operate under GitHub. You can use secrets GITHUB_TOKEN, check example'
+    description: "GitHub token that requires for operate under GitHub. You can use secrets GITHUB_TOKEN, check example"
     required: false
-    default: ''
+    default: ""
   release_tag_prefix:
-    description: 'Prefix for Git release tags'
+    description: "Prefix for Git release tags"
     required: false
-    default: ''
+    default: ""
   tag_prefix:
-    description: 'Prefix for Git tags'
+    description: "Prefix for Git tags"
     required: false
-    default: ''
+    default: ""
   log_level:
-    description: 'Semver log level'
+    description: "Semver log level"
     required: false
-    default: 'INFO'
+    default: "INFO"
 
 outputs:
   version:
-    description: 'Version tag'
+    description: "Version tag"
   safe_version:
-    description: 'Version tag without specific symbols'
+    description: "Version tag without specific symbols"
   java_version:
-    description: 'Version tag in Java format'
+    description: "Version tag in Java format"
 
 runs:
-  using: 'docker'
+  using: "docker"
   #image: 'Dockerfile'
-  image: 'docker://kvendingoldo/semver-action:v1.20.4'
+  image: "docker://kvendingoldo/semver-action:v1.20.6"
