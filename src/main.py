@@ -64,63 +64,104 @@ def get_base_version(ref='HEAD'):
     return latest_base_version
 
 
+def bump_based_on_msg(commit_message):
+    result = 'minor'
+
+    #
+    # major
+    #
+    major_bump_keywords = ['[BUMP-MAJOR]', 'bump-major', 'feat!']
+    if any(keyword in commit_message for keyword in major_bump_keywords):
+        result= 'major'
+
+    #
+    # patch
+    #
+    patch_bump_keywords = ['[hotfix]', '[fix]', 'hotfix:', 'fix:']
+    if any(keyword.lower() in commit_message.lower() for keyword in patch_bump_keywords):
+        result= 'patch'
+
+    logging.info(f'Based on the commit message {commit_message} {result} bump is required')
+    return result
+
+
 def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for_head):
-    res = ''
+    #
+    # Bump for tags
+    # Commit branch is None when pipeline launched for tag
+    #
+    if commit_branch is None:
+        if tag_for_head.startswith('rc/'):
+            logging.info(f"Tag for HEAD already exists ({tag_for_head}), no bump required")
+            return ''
 
-    # Bump for tag. commit branch is None when pipeline executed for tag
-    if tag_for_head.startswith('rc/') and commit_branch is None:
-        logging.info("Tag for HEAD already exists, no bump required {base_version}")
-        return ''
-
-    # Bump for primary branch
-    if commit_branch == PRIMARY_BRANCH:
-        if '[BUMP-MAJOR]' in commit_message or 'feat!' in commit_message:
-            logging.info("Major bump type detected from commit message %s", commit_message)
-            return 'major'
-
-        if (commit_branch in AUTO_RELEASE_FOR_BRANCHES) or ('[RELEASE]' in commit_message):
-            logging.info("Release is detected in commit: %s", commit_message)
-
-            if last_tag is None:
-                logging.info("last_tag is None, minor bump")
-                res = 'minor'
-            else:
-                if last_tag.startswith('rc/'):
-                    logging.info("last_tag starts with rc/: %s, no bump", last_tag)
-                    res = ''
-                else:
-                    logging.info("last_tag without rc/: %s, minor bump", last_tag)
-                    res = 'minor'
-            return res
-
-        if any(keyword.lower() in commit_message.lower() for keyword in ['[hotfix]', '[fix]', 'fix:']):
-            logging.info("Fix is detected in commit: %s", commit_message)
-            return 'patch'
-
-        patch_prefixes = ['fix/', 'hotfix/', 'HOTFIX/', 'FIX/']
-        if any(commit_branch.startswith(prefix) for prefix in patch_prefixes):
+    #
+    # Bump for branches
+    #
+    if commit_branch is not None:
+        #
+        # Bump for hotfix branches
+        #
+        hotfix_branch_prefixes = ['fix/', 'hotfix/', 'HOTFIX/', 'FIX/']
+        if any(commit_branch.startswith(prefix) for prefix in hotfix_branch_prefixes):
             logging.info("Fix branch is detected: %s", commit_branch)
             return 'patch'
 
-        logging.info('%s updated. Minor bump required.', commit_branch)
-        return 'minor'
+        #
+        # Bump for release branches
+        #
+        release_branch_prefixes = ['release/']
+        if any(commit_branch.startswith(prefix) for prefix in release_branch_prefixes):
+            logging.info('Release branch update detected')
+            if tag_for_head != '' or tag_for_head is not None:
+                if last_tag.startswith('rc/'):
+                    #
+                    # It's a new release branch that was cut from main which contained rc tag
+                    #
+                    logging.info("tag_for_head starts with rc/: %s, no bump", tag_for_head)
+                    return ''
+                else:
+                    logging.info("tag_for_head without rc/: %s", tag_for_head)
+                    return bump_based_on_msg(commit_message)
+            else:
+                if base_version.patch == 0 and git_get_latest_tag(candidates=0) == f"rc/{str(base_version)}":
+                    # version remains the same as in primary branch as it's the same commit
+                    logging.info('Release just cut from %s. No bump needed.', commit_branch)
+                    return ''
+                else:
+                    return bump_based_on_msg(commit_message)
 
-    # Bump for release branch
-    if commit_branch is not None and commit_branch.startswith('release/'):
-        if (
-            base_version.patch == 0 and
-            git_get_latest_tag(candidates=0) == 'rc/' + str(base_version)
-        ):
-            # version remains the same as in primary branch as it's the same commit
-            logging.info('Release just cut from %s. No bump needed.', commit_branch)
-            return ''
-        if tag_for_head != '':
-            return ''
-        logging.info('Release branch update detected. Need to bump patch.')
-        return 'patch'
+        #
+        # Bump for primary branch
+        #
+        if commit_branch == PRIMARY_BRANCH:
+            #
+            # Check release
+            #
+            if (commit_branch in AUTO_RELEASE_FOR_BRANCHES) or ('[RELEASE]' in commit_message):
+                logging.info("Release is detected in commit: %s", commit_message)
 
-    logging.info('No need for bump detected. Returning empty bump type')
-    return ''
+                if last_tag is None:
+                    #
+                    # If it's new release commit without any tags
+                    #
+                    logging.info("last_tag is None")
+                    return bump_based_on_msg(commit_message)
+                else:
+                    #
+                    # If it's a release commit with tag in last commit
+                    #
+                    if last_tag.startswith('rc/'):
+                        #
+                        # It's a new release branch that was cut from main which contained rc tag
+                        #
+                        logging.info("last_tag starts with rc/: %s, no bump", last_tag)
+                        return ''
+                    else:
+                        logging.info("last_tag without rc/: %s", last_tag)
+                        return bump_based_on_msg(commit_message)
+            else:
+                return bump_based_on_msg(commit_message)
 
 
 def get_bumped_version(last_tag, base_version, branch, commit_message, tag_for_head):
