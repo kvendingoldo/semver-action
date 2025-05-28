@@ -23,6 +23,10 @@ inputs:
     description: "If true, GitHub releases will be created as well as Git branches. Requires github_token"
     required: false
     default: "false"
+  auto_release_for_branches:
+    description: "If true, GitHub releases will be created automatically for a list of branches"
+    required: false
+    default: "false"
   github_token:
     description: "GitHub token that requires for operate under GitHub. You can use secrets GITHUB_TOKEN, check example"
     required: false

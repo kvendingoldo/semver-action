@@ -14,6 +14,7 @@ from git import GitCommandError
 
 INIT_VERSION = os.getenv("INPUT_INIT_VERSION")
 PRIMARY_BRANCH = os.getenv("INPUT_PRIMARY_BRANCH")
+AUTO_RELEASE_FOR_BRANCHES = os.getenv("INPUT_AUTO_RELEASE_FOR_BRANCHES").split(",")
 RELEASE_TAG_PREFIX = os.getenv("INPUT_RELEASE_TAG_PREFIX", "")
 TAG_PREFIX = os.getenv("INPUT_TAG_PREFIX", "")
 GITHUB_TOKEN = os.environ.get("INPUT_GITHUB_TOKEN")
@@ -73,10 +74,11 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
 
     # Bump for primary branch
     if commit_branch == PRIMARY_BRANCH:
-        if '[BUMP-MAJOR]' in commit_message:
+        if '[BUMP-MAJOR]' in commit_message or 'feat!' in commit_message:
             logging.info("Major bump type detected from commit message %s", commit_message)
             return 'major'
-        if '[RELEASE]' in commit_message:
+
+        if (commit_branch in AUTO_RELEASE_FOR_BRANCHES) or ('[RELEASE]' in commit_message):
             logging.info("Release is detected in commit: %s", commit_message)
 
             if last_tag is None:
@@ -138,7 +140,7 @@ def get_versioned_tag_value(version, branch, commit_message):
     Gets SemVer version and returns text value for tag
     If currently on primary branch, prepends "rc/" to version
     """
-    if '[RELEASE]' in commit_message:
+    if (branch in AUTO_RELEASE_FOR_BRANCHES) or ('[RELEASE]' in commit_message):
         res = str(version)
     else:
         if branch == PRIMARY_BRANCH:
@@ -339,7 +341,7 @@ def main():
         logging.info("New BASE version is: %s", new_version)
         logging.info("New tag value is: %s", tag)
 
-        if '[RELEASE]' in commit_message and current_branch == PRIMARY_BRANCH:
+        if (current_branch in AUTO_RELEASE_FOR_BRANCHES) or ('[RELEASE]' in commit_message and current_branch == PRIMARY_BRANCH):
             if RELEASE_TAG_PREFIX != "":
                 tag = RELEASE_TAG_PREFIX + tag
             if TAG_PREFIX != "":
