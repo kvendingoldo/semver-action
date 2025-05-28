@@ -139,7 +139,7 @@ def get_bump_type(base_version, commit_branch, commit_message, last_tag, tag_for
             # Check release
             #
             if (commit_branch in AUTO_RELEASE_FOR_BRANCHES) or ('[RELEASE]' in commit_message):
-                logging.info("Release is detected in commit: %s", commit_message)
+                logging.info("Release is detected in commit: '%s'", commit_message)
 
                 if last_tag is None:
                     #
