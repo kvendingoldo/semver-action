@@ -55,4 +55,4 @@ outputs:
 runs:
   using: "docker"
   #image: 'Dockerfile'
-  image: "docker://kvendingoldo/semver-action:vv1.21.0-alpha1"
+  image: "docker://kvendingoldo/semver-action:v1.21.0-alpha1"
