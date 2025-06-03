@@ -15,13 +15,6 @@ def git(*args):
     logging.info("Git command %s produced output:\n%s\n=======", args, output)
     return output
 
-def git_push_tag(repo, tag):
-    print("pushed")
-    repo.git.tag(tag, 'HEAD')
-    repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
-
-
-
 
 def actions_output(version):
     if os.getenv("GITHUB_OUTPUT"):
@@ -123,6 +116,36 @@ def get_new_semver_version(config, tag_last, bump_type):
         return version.bump_major()  # patch and minor are reset automatically
 
 
+# def get_new_version(active_branch, commit_message, tag_head, tag_last):
+#     print(active_branch)
+#     print(commit_message)
+#     print(tag_last)
+#     print(tag_head)
+#
+#     if tag_head is not None:
+#         return None
+#
+#     if active_branch == "main":
+#         bump_type = get_bump_type(commit_message)
+#         version = get_semver_version(tag_last)
+#         bumped_version = get_bumped_version(version, bump_type)
+#         print(bump_type)
+#         print(version)
+#         print(bumped_version)
+#         # Get version tag_last
+#
+#     # bump_type = get_bump_type(base_version, branch, commit_message, last_tag, tag_for_head)
+#     # if bump_type == 'patch':
+#     #     return base_version.bump_patch()
+#     # if bump_type == 'minor':
+#     #     return base_version.bump_minor()  # patch is reset automatically
+#     # if bump_type == 'major':
+#     #     return base_version.bump_major()  # patch and minor are reset automatically
+#     # logging.info('No bump requested returning original version %s', base_version)
+#     # return base_version
+#     return ''
+
+
 def create_release_branch(repo, new_version):
     release_branch = 'release/{branch_tag}'.format(branch_tag='.'.join(map(str, new_version[0:2])))
     try:
@@ -133,6 +156,11 @@ def create_release_branch(repo, new_version):
     except Exception as ex:
         logging.info("Failed to create release branch %s. Error: %s", release_branch, ex)
 
+
+def push_git_tag(repo, tag):
+    print("pushed")
+    repo.git.tag(tag, 'HEAD')
+    repo.git.push('--tags', 'origin', 'refs/tags/{tag}'.format(tag=tag))
 
 
 def main():
@@ -194,7 +222,7 @@ def main():
         new_semver_version = get_new_semver_version(config, tag_last, bump_type)
         new_tag = f"{config['tag_prefix']['candidate']}{str(new_semver_version)}"
         logging.info(f"New tag: {new_tag}")
-        git_push_tag(repo, new_tag)
+        push_git_tag(repo, new_tag)
 
         if (active_branch in config["auto_release_branches"]) or (
             '[RELEASE]' in commit_message and active_branch == config["primary_branch"]):
@@ -218,7 +246,7 @@ def main():
             origin = repo.remote(name='origin')
             origin.push()
 
-            git_push_tag(repo, new_tag)
+            push_git_tag(repo, new_tag)
 
     if active_branch.startswith("release/"):
         #
@@ -236,7 +264,7 @@ def main():
         new_semver_version = get_new_semver_version(config, tag_last, bump_type)
         new_tag = f"{config['tag_prefix']['release']}{str(new_semver_version)}"
         logging.info(f"New tag: {new_tag}")
-        git_push_tag(repo, new_tag)
+        push_git_tag(repo, new_tag)
 
         #
         # Create GitHub release
