@@ -1,6 +1,10 @@
 # Semantic Versioning Git Auto Tag Action
 A GitHub action that generates SemVer compatible tag on repository commits.
 
+> [!WARNING]  
+> Critical content demanding immediate user attention due to potential risks.
+> This plugin is no longer actively developed and is now in maintenance-only mode. Please, migrate to [kvendingoldo/git-flow-action](https://github.com/kvendingoldo/git-flow-action).
+
 # Usage example
 By default, the action will create Git version tag per commit to primary and `release/*` branches. Default format of tag: `rc/x.y.z`.
 Any user can create `[RELEASE] <anything>` commit, after that action will create `release/x.y` branch.
